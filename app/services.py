@@ -102,3 +102,32 @@ def upload_ticket_attachment_service(ticket_id: str, file: UploadFile):
     except ClientError as e:
         logger.error(f"S3/DynamoDB error while uploading attachment: {e}")
         raise
+
+def get_attachment_url_service(ticket_id: str):
+    try:
+        ticket = get_ticket_by_id_service(ticket_id)
+
+        if not ticket or "attachment" not in ticket:
+            return None
+
+        key = ticket["attachment"]["key"]
+
+        url = s3.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": S3_BUCKET_NAME,
+                "Key": key
+            },
+            ExpiresIn=3600  # 1 hour
+        )
+
+        logger.info(f"Generated signed URL for ticket id={ticket_id}")
+
+        return {
+            "ticket_id": ticket_id,
+            "url": url
+        }
+
+    except ClientError as e:
+        logger.error(f"Error generating signed URL: {e}")
+        raise

@@ -5,7 +5,8 @@ from app.services import (
     create_ticket_service,
     get_all_tickets_service,
     get_ticket_by_id_service,
-    upload_ticket_attachment_service
+    upload_ticket_attachment_service,
+    get_attachment_url_service
 )
 router = APIRouter()
 
@@ -48,3 +49,16 @@ def upload_ticket_attachment(ticket_id: str, file: UploadFile = File(...)):
 
     except ClientError:
         raise HTTPException(status_code=500, detail="Failed to upload attachment")
+    
+@router.get("/tickets/{ticket_id}/attachment")
+def get_ticket_attachment(ticket_id: str):
+    try:
+        result = get_attachment_url_service(ticket_id)
+
+        if result is None:
+            raise HTTPException(status_code=404, detail="Attachment not found")
+
+        return result
+
+    except ClientError:
+        raise HTTPException(status_code=500, detail="Failed to retrieve attachment")
